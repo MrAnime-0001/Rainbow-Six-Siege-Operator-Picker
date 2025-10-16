@@ -41,7 +41,7 @@
             // 
             btnPickAttacker.Location = new Point(12, 12);
             btnPickAttacker.Name = "btnPickAttacker";
-            btnPickAttacker.Size = new Size(106, 38);
+            btnPickAttacker.Size = new Size(111, 38);
             btnPickAttacker.TabIndex = 0;
             btnPickAttacker.Text = "Pick Attacker";
             btnPickAttacker.UseVisualStyleBackColor = true;
@@ -49,9 +49,9 @@
             // 
             // btnPickDefender
             // 
-            btnPickDefender.Location = new Point(127, 12);
+            btnPickDefender.Location = new Point(135, 12);
             btnPickDefender.Name = "btnPickDefender";
-            btnPickDefender.Size = new Size(106, 38);
+            btnPickDefender.Size = new Size(111, 38);
             btnPickDefender.TabIndex = 1;
             btnPickDefender.Text = "Pick Defender";
             btnPickDefender.UseVisualStyleBackColor = true;
@@ -71,7 +71,7 @@
             // 
             pictureBox.Location = new Point(13, 115);
             pictureBox.Name = "pictureBox";
-            pictureBox.Size = new Size(220, 220);
+            pictureBox.Size = new Size(233, 233);
             pictureBox.SizeMode = PictureBoxSizeMode.StretchImage;
             pictureBox.TabIndex = 3;
             pictureBox.TabStop = false;
@@ -80,7 +80,7 @@
             // 
             btnSelectOperators.Location = new Point(13, 56);
             btnSelectOperators.Name = "btnSelectOperators";
-            btnSelectOperators.Size = new Size(220, 38);
+            btnSelectOperators.Size = new Size(233, 38);
             btnSelectOperators.TabIndex = 4;
             btnSelectOperators.Text = "Choose Pickable Operators";
             btnSelectOperators.UseVisualStyleBackColor = true;
@@ -91,13 +91,13 @@
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = Color.FromArgb(33, 33, 33);
-            ClientSize = new Size(243, 343);
+            ClientSize = new Size(258, 360);
             Controls.Add(btnSelectOperators);
             Controls.Add(pictureBox);
             Controls.Add(lblResult);
             Controls.Add(btnPickDefender);
             Controls.Add(btnPickAttacker);
-            FormBorderStyle = FormBorderStyle.Fixed3D;
+            FormBorderStyle = FormBorderStyle.FixedSingle;
             Icon = (Icon)resources.GetObject("$this.Icon");
             Name = "Form1";
             StartPosition = FormStartPosition.CenterScreen;
