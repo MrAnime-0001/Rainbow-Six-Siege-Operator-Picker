@@ -11,6 +11,8 @@ namespace Rainbow_Six_Siege_Operator_Picker
     {
         private List<string> attackers = new List<string>();
         private List<string> defenders = new List<string>();
+        private List<string> allowedAttackers = new List<string>();
+        private List<string> allowedDefenders = new List<string>();
         private Random rng = new Random();
 
         private string dataFolder;
@@ -36,7 +38,6 @@ namespace Rainbow_Six_Siege_Operator_Picker
             defenderImageFolder = Path.Combine(imageFolder, "Defenders");
             fillerImagePath = Path.Combine(imageFolder, "no_image.png");
 
-            // Create directories if they don't exist
             Directory.CreateDirectory(dataFolder);
             Directory.CreateDirectory(attackerImageFolder);
             Directory.CreateDirectory(defenderImageFolder);
@@ -66,12 +67,16 @@ namespace Rainbow_Six_Siege_Operator_Picker
                 string defenderPath = Path.Combine(dataFolder, "defenders.txt");
 
                 if (File.Exists(attackerPath))
-                    attackers = File.ReadAllLines(attackerPath).Where(l => !string.IsNullOrWhiteSpace(l)).ToList();
+                    attackers = File.ReadAllLines(attackerPath)
+                        .Where(l => !string.IsNullOrWhiteSpace(l))
+                        .ToList();
                 else
                     MessageBox.Show("Missing file: Data/attackers.txt");
 
                 if (File.Exists(defenderPath))
-                    defenders = File.ReadAllLines(defenderPath).Where(l => !string.IsNullOrWhiteSpace(l)).ToList();
+                    defenders = File.ReadAllLines(defenderPath)
+                        .Where(l => !string.IsNullOrWhiteSpace(l))
+                        .ToList();
                 else
                     MessageBox.Show("Missing file: Data/defenders.txt");
             }
@@ -83,12 +88,14 @@ namespace Rainbow_Six_Siege_Operator_Picker
 
         private void btnPickAttacker_Click(object sender, EventArgs e)
         {
-            PickOperator(attackers, "Attacker", attackerImageFolder);
+            var list = allowedAttackers.Count > 0 ? allowedAttackers : attackers;
+            PickOperator(list, "Attacker", attackerImageFolder);
         }
 
         private void btnPickDefender_Click(object sender, EventArgs e)
         {
-            PickOperator(defenders, "Defender", defenderImageFolder);
+            var list = allowedDefenders.Count > 0 ? allowedDefenders : defenders;
+            PickOperator(list, "Defender", defenderImageFolder);
         }
 
         private void PickOperator(List<string> list, string type, string folder)
@@ -109,10 +116,7 @@ namespace Rainbow_Six_Siege_Operator_Picker
         {
             pictureBox.Image = null;
 
-            // Case-insensitive image lookup
             string[] possibleFiles = Directory.GetFiles(folder, "*.png", SearchOption.TopDirectoryOnly);
-
-            // Try to find any file whose name matches (case-insensitive)
             string imagePath = possibleFiles
                 .FirstOrDefault(f => string.Equals(
                     Path.GetFileNameWithoutExtension(f),
@@ -159,6 +163,27 @@ namespace Rainbow_Six_Siege_Operator_Picker
             {
                 pictureBox.Image = null;
             }
+        }
+
+        // Open Selective Picker Form
+        private void btnSelectOperators_Click(object sender, EventArgs e)
+        {
+            // Hide the main form
+            this.Hide();
+
+            using (var picker = new SelectivePickerForm(allowedAttackers, allowedDefenders))
+            {
+                var result = picker.ShowDialog();
+
+                if (result == DialogResult.OK)
+                {
+                    allowedAttackers = picker.SelectedAttackers;
+                    allowedDefenders = picker.SelectedDefenders;
+                }
+            }
+
+            // Show the main form again
+            this.Show();
         }
     }
 }

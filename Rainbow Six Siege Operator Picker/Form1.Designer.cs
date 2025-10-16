@@ -33,6 +33,7 @@
             btnPickDefender = new Button();
             lblResult = new Label();
             pictureBox = new PictureBox();
+            btnSelectOperators = new Button();
             ((System.ComponentModel.ISupportInitialize)pictureBox).BeginInit();
             SuspendLayout();
             // 
@@ -40,7 +41,7 @@
             // 
             btnPickAttacker.Location = new Point(12, 12);
             btnPickAttacker.Name = "btnPickAttacker";
-            btnPickAttacker.Size = new Size(100, 23);
+            btnPickAttacker.Size = new Size(106, 38);
             btnPickAttacker.TabIndex = 0;
             btnPickAttacker.Text = "Pick Attacker";
             btnPickAttacker.UseVisualStyleBackColor = true;
@@ -48,9 +49,9 @@
             // 
             // btnPickDefender
             // 
-            btnPickDefender.Location = new Point(132, 12);
+            btnPickDefender.Location = new Point(127, 12);
             btnPickDefender.Name = "btnPickDefender";
-            btnPickDefender.Size = new Size(100, 23);
+            btnPickDefender.Size = new Size(106, 38);
             btnPickDefender.TabIndex = 1;
             btnPickDefender.Text = "Pick Defender";
             btnPickDefender.UseVisualStyleBackColor = true;
@@ -60,7 +61,7 @@
             // 
             lblResult.AutoSize = true;
             lblResult.ForeColor = Color.White;
-            lblResult.Location = new Point(12, 38);
+            lblResult.Location = new Point(13, 97);
             lblResult.Name = "lblResult";
             lblResult.Size = new Size(29, 15);
             lblResult.TabIndex = 2;
@@ -68,19 +69,30 @@
             // 
             // pictureBox
             // 
-            pictureBox.Location = new Point(12, 56);
+            pictureBox.Location = new Point(13, 115);
             pictureBox.Name = "pictureBox";
             pictureBox.Size = new Size(220, 220);
             pictureBox.SizeMode = PictureBoxSizeMode.StretchImage;
             pictureBox.TabIndex = 3;
             pictureBox.TabStop = false;
             // 
+            // btnSelectOperators
+            // 
+            btnSelectOperators.Location = new Point(13, 56);
+            btnSelectOperators.Name = "btnSelectOperators";
+            btnSelectOperators.Size = new Size(220, 38);
+            btnSelectOperators.TabIndex = 4;
+            btnSelectOperators.Text = "Choose Pickable Operators";
+            btnSelectOperators.UseVisualStyleBackColor = true;
+            btnSelectOperators.Click += btnSelectOperators_Click;
+            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = Color.FromArgb(33, 33, 33);
-            ClientSize = new Size(243, 290);
+            ClientSize = new Size(243, 343);
+            Controls.Add(btnSelectOperators);
             Controls.Add(pictureBox);
             Controls.Add(lblResult);
             Controls.Add(btnPickDefender);
@@ -101,5 +113,6 @@
         private Button btnPickDefender;
         private Label lblResult;
         private PictureBox pictureBox;
+        private Button btnSelectOperators;
     }
 }
