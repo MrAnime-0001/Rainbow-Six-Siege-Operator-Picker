@@ -14,6 +14,8 @@ namespace Rainbow_Six_Siege_Operator_Picker
         private List<string> defenders = new List<string>();
         private List<string> allowedAttackers = new List<string>();
         private List<string> allowedDefenders = new List<string>();
+        private string lastAttacker = null;
+        private string lastDefender = null;
         private Random rng = new Random();
 
         private string dataFolder;
@@ -181,9 +183,39 @@ namespace Rainbow_Six_Siege_Operator_Picker
                 return;
             }
 
-            string selected = list[rng.Next(list.Count)];
+            // If only one operator is available, always pick that
+            if (list.Count == 1)
+            {
+                string single = list[0];
+                lblResult.Text = $"{type}: {single}";
+                LoadOperatorImage(single, folder);
+
+                // Update last picked
+                if (type == "Attacker")
+                    lastAttacker = single;
+                else
+                    lastDefender = single;
+
+                return;
+            }
+
+            // Otherwise, avoid repeating the last one
+            string selected;
+            do
+            {
+                selected = list[rng.Next(list.Count)];
+            }
+            while ((type == "Attacker" && selected == lastAttacker) ||
+                   (type == "Defender" && selected == lastDefender));
+
             lblResult.Text = $"{type}: {selected}";
             LoadOperatorImage(selected, folder);
+
+            // Update last picked
+            if (type == "Attacker")
+                lastAttacker = selected;
+            else
+                lastDefender = selected;
         }
 
         private void LoadOperatorImage(string operatorName, string folder)
