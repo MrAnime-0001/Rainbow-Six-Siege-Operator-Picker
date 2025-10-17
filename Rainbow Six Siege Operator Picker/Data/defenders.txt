@@ -11,7 +11,7 @@ Jager
 Bandit
 Frost
 Valkyrie
-Caveria
+Caveira
 Echo
 Mira
 Lesion
