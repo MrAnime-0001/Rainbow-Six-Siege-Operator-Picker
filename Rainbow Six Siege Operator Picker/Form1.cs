@@ -16,6 +16,8 @@ namespace Rainbow_Six_Siege_Operator_Picker
         private List<string> allowedDefenders = new List<string>();
         private string lastAttacker = null;
         private string lastDefender = null;
+        private Dictionary<string, int> attackerPickCounts = new Dictionary<string, int>();
+        private Dictionary<string, int> defenderPickCounts = new Dictionary<string, int>();
         private Random rng = new Random();
 
         private string dataFolder;
@@ -183,35 +185,49 @@ namespace Rainbow_Six_Siege_Operator_Picker
                 return;
             }
 
-            // If only one operator is available, always pick that
-            if (list.Count == 1)
+            // Choose which dictionary to use
+            var pickCounts = type == "Attacker" ? attackerPickCounts : defenderPickCounts;
+            string lastPick = type == "Attacker" ? lastAttacker : lastDefender;
+
+            // Ensure dictionary has entries for all operators
+            foreach (var op in list)
             {
-                string single = list[0];
-                lblResult.Text = $"{type}: {single}";
-                LoadOperatorImage(single, folder);
-
-                // Update last picked
-                if (type == "Attacker")
-                    lastAttacker = single;
-                else
-                    lastDefender = single;
-
-                return;
+                if (!pickCounts.ContainsKey(op))
+                    pickCounts[op] = 0;
             }
 
-            // Otherwise, avoid repeating the last one
+            // If all operators have been picked at least once, reset for a new round
+            if (pickCounts.Values.All(v => v > 0))
+            {
+                foreach (var key in pickCounts.Keys.ToList())
+                    pickCounts[key] = 0;
+            }
+
+            // Find all operators not yet picked this round
+            var available = list.Where(op => pickCounts[op] == 0).ToList();
+
+            if (available.Count == 0)
+            {
+                // Safety fallback
+                available = new List<string>(list);
+            }
+
+            // Pick a random operator (avoid same as last)
             string selected;
             do
             {
-                selected = list[rng.Next(list.Count)];
+                selected = available[rng.Next(available.Count)];
             }
-            while ((type == "Attacker" && selected == lastAttacker) ||
-                   (type == "Defender" && selected == lastDefender));
+            while (available.Count > 1 && selected == lastPick);
 
+            // Update label and image
             lblResult.Text = $"{type}: {selected}";
             LoadOperatorImage(selected, folder);
 
-            // Update last picked
+            // Update counters
+            pickCounts[selected]++;
+
+            // Update last picks
             if (type == "Attacker")
                 lastAttacker = selected;
             else
@@ -294,8 +310,17 @@ namespace Rainbow_Six_Siege_Operator_Picker
 
                 if (result == DialogResult.OK)
                 {
+                    // Update the allowed operators
                     allowedAttackers = picker.SelectedAttackers;
                     allowedDefenders = picker.SelectedDefenders;
+
+                    // 🔄 Optional Reset: Clear pick counts for the new set
+                    attackerPickCounts.Clear();
+                    defenderPickCounts.Clear();
+
+                    // Reset last picked operators
+                    lastAttacker = null;
+                    lastDefender = null;
                 }
             }
 
