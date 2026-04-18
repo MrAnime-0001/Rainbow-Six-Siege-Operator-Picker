@@ -35,7 +35,9 @@ namespace Rainbow_Six_Siege_Operator_Picker
                     {
                         Text = op.Trim(),
                         Checked = currentAttackers.Any(a => string.Equals(a, op.Trim(), StringComparison.OrdinalIgnoreCase)),
-                        AutoSize = true
+                        AutoSize = true,
+                        ForeColor = Color.White,
+                        BackColor = Color.FromArgb(38, 38, 42)
                     };
                     flowAttackers.Controls.Add(cb);
                 }
@@ -51,7 +53,9 @@ namespace Rainbow_Six_Siege_Operator_Picker
                     {
                         Text = op.Trim(),
                         Checked = currentDefenders.Any(d => string.Equals(d, op.Trim(), StringComparison.OrdinalIgnoreCase)),
-                        AutoSize = true
+                        AutoSize = true,
+                        ForeColor = Color.White,
+                        BackColor = Color.FromArgb(38, 38, 42)
                     };
                     flowDefenders.Controls.Add(cb);
                 }

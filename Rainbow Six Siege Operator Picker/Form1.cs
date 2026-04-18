@@ -1,10 +1,8 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Windows.Forms;
 using System.Drawing;
-using Gma.System.MouseKeyHook;
 
 namespace Rainbow_Six_Siege_Operator_Picker
 {
@@ -14,126 +12,41 @@ namespace Rainbow_Six_Siege_Operator_Picker
         private List<string> defenders = new List<string>();
         private List<string> allowedAttackers = new List<string>();
         private List<string> allowedDefenders = new List<string>();
-        private string lastAttacker = null;
-        private string lastDefender = null;
-        private Dictionary<string, int> attackerPickCounts = new Dictionary<string, int>();
-        private Dictionary<string, int> defenderPickCounts = new Dictionary<string, int>();
-        private Random rng = new Random();
 
-        private string dataFolder;
-        private string imageFolder;
-        private string attackerImageFolder;
-        private string defenderImageFolder;
-        private string fillerImagePath;
-
-        // MouseKeyHook Stuff
-        private IKeyboardMouseEvents globalHook;
-        private bool hotkeyOnCooldown = false;
-        private bool hotkeysEnabled = true;
-        private System.Windows.Forms.Timer hotkeyCooldownTimer;
-        private int hotkeyCooldownDuration = 2000;
+        private AppPaths paths;
+        private OperatorPicker picker;
+        private ImageLoader imageLoader;
+        private HotkeyHandler hotkeyHandler;
 
         public Form1()
         {
             InitializeComponent();
-            SetupPaths();
+
+            paths = new AppPaths();
+            picker = new OperatorPicker();
+            imageLoader = new ImageLoader(paths.FillerImagePath);
+
             LoadAppIcon();
             LoadOperators();
 
-            // Initialize global hook
-            globalHook = Hook.GlobalEvents();
-            globalHook.KeyDown += GlobalHook_KeyDown;
-
-            // Setup cooldown timer
-            hotkeyCooldownTimer = new System.Windows.Forms.Timer();
-            hotkeyCooldownTimer.Interval = hotkeyCooldownDuration;
-            hotkeyCooldownTimer.Tick += (s, e) =>
-            {
-                hotkeyOnCooldown = false;
-                hotkeyCooldownTimer.Stop();
-            };
+            hotkeyHandler = new HotkeyHandler();
+            hotkeyHandler.AttackerHotkeyPressed += PickAttackerHotkey;
+            hotkeyHandler.DefenderHotkeyPressed += PickDefenderHotkey;
         }
 
         protected override void OnFormClosing(FormClosingEventArgs e)
         {
-            // Dispose hook when closing
-            globalHook?.Dispose();
+            hotkeyHandler?.Dispose();
             base.OnFormClosing(e);
-        }
-
-        // Handle global hotkeys
-        private void GlobalHook_KeyDown(object sender, KeyEventArgs e)
-        {
-            if (!hotkeysEnabled)
-                return;
-
-            // Check Ctrl + Alt
-            if (e.Control && e.Alt)
-            {
-                if (e.KeyCode == Keys.NumPad1)
-                    PickAttackerHotkey();
-                else if (e.KeyCode == Keys.NumPad2)
-                    PickDefenderHotkey();
-            }
-        }
-
-        private void PickAttackerHotkey()
-        {
-            if (hotkeyOnCooldown)
-                return;
-
-            hotkeyOnCooldown = true;
-            hotkeyCooldownTimer.Start();
-
-            var list = allowedAttackers.Count > 0 ? allowedAttackers : attackers;
-            PickOperator(list, "Attacker", attackerImageFolder);
-
-            // Show toast using lblResult text
-            ToastNotifier.ShowToast(lblResult.Text);
-        }
-
-        private void PickDefenderHotkey()
-        {
-            if (hotkeyOnCooldown)
-                return;
-
-            hotkeyOnCooldown = true;
-            hotkeyCooldownTimer.Start();
-
-            var list = allowedDefenders.Count > 0 ? allowedDefenders : defenders;
-            PickOperator(list, "Defender", defenderImageFolder);
-
-            // Show toast using lblResult text
-            ToastNotifier.ShowToast(lblResult.Text);
-        }
-
-        private void SetupPaths()
-        {
-            string baseDir = AppDomain.CurrentDomain.BaseDirectory;
-            dataFolder = Path.Combine(baseDir, "Data");
-            imageFolder = Path.Combine(baseDir, "Images");
-            attackerImageFolder = Path.Combine(imageFolder, "Attackers");
-            defenderImageFolder = Path.Combine(imageFolder, "Defenders");
-            fillerImagePath = Path.Combine(imageFolder, "no_image.png");
-
-            Directory.CreateDirectory(dataFolder);
-            Directory.CreateDirectory(attackerImageFolder);
-            Directory.CreateDirectory(defenderImageFolder);
         }
 
         private void LoadAppIcon()
         {
-            string iconPath = Path.Combine(imageFolder, "appicon.ico");
+            string iconPath = Path.Combine(paths.ImageFolder, "appicon.ico");
             if (File.Exists(iconPath))
             {
-                try
-                {
-                    Icon = new Icon(iconPath);
-                }
-                catch
-                {
-                    MessageBox.Show("Failed to load app icon (invalid format).");
-                }
+                try { Icon = new Icon(iconPath); }
+                catch { MessageBox.Show("Failed to load app icon (invalid format)."); }
             }
         }
 
@@ -141,22 +54,8 @@ namespace Rainbow_Six_Siege_Operator_Picker
         {
             try
             {
-                string attackerPath = Path.Combine(dataFolder, "attackers.txt");
-                string defenderPath = Path.Combine(dataFolder, "defenders.txt");
-
-                if (File.Exists(attackerPath))
-                    attackers = File.ReadAllLines(attackerPath)
-                        .Where(l => !string.IsNullOrWhiteSpace(l))
-                        .ToList();
-                else
-                    MessageBox.Show("Missing file: Data/attackers.txt");
-
-                if (File.Exists(defenderPath))
-                    defenders = File.ReadAllLines(defenderPath)
-                        .Where(l => !string.IsNullOrWhiteSpace(l))
-                        .ToList();
-                else
-                    MessageBox.Show("Missing file: Data/defenders.txt");
+                attackers = OperatorLoader.Load(Path.Combine(paths.DataFolder, "attackers.txt"));
+                defenders = OperatorLoader.Load(Path.Combine(paths.DataFolder, "defenders.txt"));
             }
             catch (Exception ex)
             {
@@ -167,168 +66,64 @@ namespace Rainbow_Six_Siege_Operator_Picker
         private void btnPickAttacker_Click(object sender, EventArgs e)
         {
             var list = allowedAttackers.Count > 0 ? allowedAttackers : attackers;
-            PickOperator(list, "Attacker", attackerImageFolder);
+            PickAndDisplay(list, "Attacker", paths.AttackerImageFolder);
         }
 
         private void btnPickDefender_Click(object sender, EventArgs e)
         {
             var list = allowedDefenders.Count > 0 ? allowedDefenders : defenders;
-            PickOperator(list, "Defender", defenderImageFolder);
+            PickAndDisplay(list, "Defender", paths.DefenderImageFolder);
         }
 
-        private void PickOperator(List<string> list, string type, string folder)
+        private void PickAttackerHotkey()
         {
-            if (list.Count == 0)
+            var list = allowedAttackers.Count > 0 ? allowedAttackers : attackers;
+            PickAndDisplay(list, "Attacker", paths.AttackerImageFolder);
+            ToastNotifier.ShowToast(lblResult.Text);
+        }
+
+        private void PickDefenderHotkey()
+        {
+            var list = allowedDefenders.Count > 0 ? allowedDefenders : defenders;
+            PickAndDisplay(list, "Defender", paths.DefenderImageFolder);
+            ToastNotifier.ShowToast(lblResult.Text);
+        }
+
+        private void PickAndDisplay(List<string> list, string type, string folder)
+        {
+            string selected = picker.Pick(list, type);
+
+            if (selected == null)
             {
                 lblResult.Text = $"No {type.ToLower()}s loaded!";
                 pictureBox.Image = null;
                 return;
             }
 
-            // Choose which dictionary to use
-            var pickCounts = type == "Attacker" ? attackerPickCounts : defenderPickCounts;
-            string lastPick = type == "Attacker" ? lastAttacker : lastDefender;
-
-            // Ensure dictionary has entries for all operators
-            foreach (var op in list)
-            {
-                if (!pickCounts.ContainsKey(op))
-                    pickCounts[op] = 0;
-            }
-
-            // If all operators have been picked at least once, reset for a new round
-            if (pickCounts.Values.All(v => v > 0))
-            {
-                foreach (var key in pickCounts.Keys.ToList())
-                    pickCounts[key] = 0;
-            }
-
-            // Find all operators not yet picked this round
-            var available = list.Where(op => pickCounts[op] == 0).ToList();
-
-            if (available.Count == 0)
-            {
-                // Safety fallback
-                available = new List<string>(list);
-            }
-
-            // Pick a random operator (avoid same as last)
-            string selected;
-            do
-            {
-                selected = available[rng.Next(available.Count)];
-            }
-            while (available.Count > 1 && selected == lastPick);
-
-            // Update label and image
             lblResult.Text = $"{type}: {selected}";
-            LoadOperatorImage(selected, folder);
-
-            // Update counters
-            pickCounts[selected]++;
-
-            // Update last picks
-            if (type == "Attacker")
-                lastAttacker = selected;
-            else
-                lastDefender = selected;
+            pictureBox.Image = imageLoader.LoadOperatorImage(selected, folder);
         }
 
-        private void LoadOperatorImage(string operatorName, string folder)
-        {
-            pictureBox.Image = null;
-
-            string[] possibleFiles = Directory.GetFiles(folder, "*.png", SearchOption.TopDirectoryOnly);
-            string imagePath = possibleFiles
-                .FirstOrDefault(f => string.Equals(
-                    Path.GetFileNameWithoutExtension(f),
-                    operatorName,
-                    StringComparison.OrdinalIgnoreCase));
-
-            if (imagePath != null && File.Exists(imagePath))
-            {
-                try
-                {
-                    using (var imgTemp = Image.FromFile(imagePath))
-                    {
-                        pictureBox.Image = new Bitmap(imgTemp);
-                    }
-                }
-                catch
-                {
-                    LoadFillerImage();
-                }
-            }
-            else
-            {
-                LoadFillerImage();
-            }
-        }
-
-        private void LoadFillerImage()
-        {
-            if (File.Exists(fillerImagePath))
-            {
-                try
-                {
-                    using (var imgTemp = Image.FromFile(fillerImagePath))
-                    {
-                        pictureBox.Image = new Bitmap(imgTemp);
-                    }
-                }
-                catch
-                {
-                    pictureBox.Image = null;
-                }
-            }
-            else
-            {
-                pictureBox.Image = null;
-            }
-        }
-
-        // Open Selective Picker Form
         private void btnSelectOperators_Click(object sender, EventArgs e)
         {
-            // Respect the hotkey cooldown
-            if (hotkeyOnCooldown)
+            if (!hotkeyHandler.TryStartCooldown())
                 return;
 
-            // Start the cooldown
-            hotkeyOnCooldown = true;
-            hotkeyCooldownTimer.Start();
-
-            // Temporarily disable hotkeys
-            hotkeysEnabled = false;
-
-            // Hide the main form and show the picker
+            hotkeyHandler.Enabled = false;
             this.Hide();
 
-            using (var picker = new SelectivePickerForm(allowedAttackers, allowedDefenders))
+            using (var form = new SelectivePickerForm(allowedAttackers, allowedDefenders))
             {
-                var result = picker.ShowDialog();
-
-                if (result == DialogResult.OK)
+                if (form.ShowDialog() == DialogResult.OK)
                 {
-                    // Update the allowed operators
-                    allowedAttackers = picker.SelectedAttackers;
-                    allowedDefenders = picker.SelectedDefenders;
-
-                    // 🔄 Optional Reset: Clear pick counts for the new set
-                    attackerPickCounts.Clear();
-                    defenderPickCounts.Clear();
-
-                    // Reset last picked operators
-                    lastAttacker = null;
-                    lastDefender = null;
+                    allowedAttackers = form.SelectedAttackers;
+                    allowedDefenders = form.SelectedDefenders;
+                    picker.Reset();
                 }
             }
 
-            // Show the main form again
             this.Show();
-
-            // Re-enable hotkeys after closing the picker
-            hotkeysEnabled = true;
+            hotkeyHandler.Enabled = true;
         }
     }
 }

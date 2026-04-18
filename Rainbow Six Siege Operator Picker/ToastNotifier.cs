@@ -1,4 +1,8 @@
-﻿using System.Media;
+using System;
+using System.Drawing;
+using System.Media;
+using System.Threading.Tasks;
+using System.Windows.Forms;
 
 public static class ToastNotifier
 {
@@ -7,22 +11,27 @@ public static class ToastNotifier
     public static async void ShowToast(string message, int duration = 2000, bool playSound = true)
     {
         if (toastActive)
-            return; // Exit if a toast is already active
+            return;
 
         toastActive = true;
 
+        Size size = new Size(250, 60);
+        int margin = 10;
+
         Form toast = new Form
         {
-            FormBorderStyle = FormBorderStyle.None,
+            FormBorderStyle = FormBorderStyle.FixedToolWindow,
             StartPosition = FormStartPosition.Manual,
             ShowInTaskbar = false,
             TopMost = true,
-            BackColor = Color.FromArgb(45, 45, 48),
-            Size = new Size(250, 60),
+            ControlBox = false,
+            Text = string.Empty,
+            BackColor = Color.Black,
+            Size = size,
             Opacity = 0.9
         };
 
-        Label lbl = new Label
+        toast.Controls.Add(new Label
         {
             Text = message,
             Dock = DockStyle.Fill,
@@ -30,13 +39,13 @@ public static class ToastNotifier
             Font = new Font("Segoe UI", 10, FontStyle.Bold),
             ForeColor = Color.White,
             BackColor = Color.Transparent
-        };
+        });
 
-        toast.Controls.Add(lbl);
-
-        // Position toast at the bottom-right of the screen
-        var workingArea = Screen.PrimaryScreen.WorkingArea;
-        toast.Location = new Point(workingArea.Right - toast.Width - 10, workingArea.Bottom - toast.Height - 10);
+        var screen = Screen.PrimaryScreen.WorkingArea;
+        toast.Location = new Point(
+            screen.Right - toast.Width - margin,
+            screen.Bottom - toast.Height - margin
+        );
 
         toast.Shown += async (s, e) =>
         {
@@ -44,8 +53,18 @@ public static class ToastNotifier
                 SystemSounds.Exclamation.Play();
 
             await Task.Delay(duration);
-            toast.Close();
-            toastActive = false; // Reset flag when toast closes
+
+            for (double i = toast.Opacity; i >= 0; i -= 0.05)
+            {
+                if (toast.IsDisposed) break;
+                toast.Invoke((Action)(() => toast.Opacity = i));
+                await Task.Delay(20);
+            }
+
+            if (!toast.IsDisposed)
+                toast.Invoke((Action)(() => toast.Close()));
+
+            toastActive = false;
         };
 
         toast.Show();
