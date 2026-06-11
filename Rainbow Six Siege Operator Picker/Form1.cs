@@ -42,12 +42,8 @@ namespace Rainbow_Six_Siege_Operator_Picker
 
         private void LoadAppIcon()
         {
-            string iconPath = Path.Combine(paths.ImageFolder, "appicon.ico");
-            if (File.Exists(iconPath))
-            {
-                try { Icon = new Icon(iconPath); }
-                catch { MessageBox.Show("Failed to load app icon (invalid format)."); }
-            }
+            using var stream = System.Reflection.Assembly.GetExecutingAssembly().GetManifestResourceStream("Rainbow_Six_Siege_Operator_Picker.Images.appicon.ico");
+            if (stream != null) Icon = new Icon(stream);
         }
 
         private void LoadOperators()
